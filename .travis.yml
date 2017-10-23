@@ -1,0 +1,42 @@
+language: c
+env:
+  global:
+  - NJOBS=2
+  - COMPILER="4.05.0"
+
+cache:
+  apt: true
+  directories:
+  - ${HOME}/opam-cache
+
+install:
+- opam init --root=${HOME}/opam-root -j ${NJOBS} --compiler=${COMPILER} -n -y
+- eval $(opam config --root=${HOME}/opam-root env)
+- opam config list
+- opam install -j ${NJOBS} -y camlp5 ocamlfind ${EXTRA_OPAM}
+- opam list
+- mkdir -p ${HOME}/opam-cache
+- tar czf ${HOME}/opam-cache/cache-${COMPILER}.tgz ${HOME}/opam-root
+
+script:
+- git diff-tree --no-commit-id --name-only -r master..${TRAVIS_COMMIT} | xargs scripts/opam-coq-lint ${HOME}/opam-cache/cache-${COMPILER}.tgz
+        
+dist: trusty
+sudo: required
+matrix:
+  include:
+  - os: linux
+    addons:
+      apt:
+        sources:
+        - avsm
+        packages:
+        - opam
+        - aspcud
+        - gcc-multilib
+  - os: osx
+    osx_image: xcode7.3
+    before_install:
+    - brew update
+    - brew install opam
+    
