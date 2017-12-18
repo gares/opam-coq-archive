@@ -37,16 +37,25 @@ run: all
 	$(H)cd www && python -m SimpleHTTPServer 8000
 
 check-deps: \
-	which-opam which-lua5.1 opam-config which-markdown yamlpp
+	which-opam which-markdown \
+	opkg-opam-file-format opkg-ocamlfind \
+	yamlpp scripts/archive2web.native
 
 yamlpp:
 	cd $(COQWEB); make yamlpp-0.3/yamlpp incl/news/recent.html
 
+
+.PHONY: scripts/archive2web.native
+scripts/archive2web.native:
+	eval `opam config env`; \
+	ocamlfind opt -package opam-file-format,str \
+       		-linkpkg scripts/archive2web.ml -o $@	
+
 which-%:
 	$(H)which $* > /dev/null || (echo "Please install $*"; false)
 
-pkg-%:
-	$(H)dpkg -l $* > /dev/null 2>&1 || (echo "Please install $*"; false)
+opkg-%:
+	$(H)opam list $* > /dev/null || (echo "Please opam install $*"; false)
 
 # opam admin fails if there is no ~/.opam/config
 opam-config:
